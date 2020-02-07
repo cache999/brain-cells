@@ -1,0 +1,6 @@
+{
+  "bot_filename": "bot",
+  "controller_filename": "controller",
+  "view_filename": "view",
+  "prefix": "$"
+}
