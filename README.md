@@ -1,4 +1,4 @@
-#brain-cells
+# brain-cells
 The smartest yet dumbest bot to ever exist. Guaranteed to kill 100% of your neurons.
 
 ### Setup
