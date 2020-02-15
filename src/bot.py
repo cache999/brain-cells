@@ -1,12 +1,13 @@
 import discord
 from dotenv import load_dotenv
 import os
+import importlib
+
 load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 
 if BOT_TOKEN is None:
     raise LookupError('BOT_TOKEN is not defined!')
-
 
 '''
     Code architecture for this project:
@@ -33,10 +34,10 @@ class Client(discord.Client):
     # create our own subclass of discord.Client so we hopefully don't break stuff via monkey patching.
     pass
 
-
 def init_bot():
     client = Client()
     client.run(BOT_TOKEN)
+
 
 if __name__ == "__main__":
     raise NameError('Run controller.py instead!')

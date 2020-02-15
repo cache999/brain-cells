@@ -1,0 +1,32 @@
+{
+  "UnipolarNeuron": {
+    "Type": "Neuron",
+    "UnlocksAt": 0,
+    "BaseCost": "5p5f",
+
+    "Synapses": 1,
+    "StructInt": 0,
+    "Regeneration": 0,
+    "Myelination": 0
+  },
+  "BipolarNeuron": {
+    "Type": "Neuron",
+    "UnlocksAt": 25,
+    "BaseCost": "5p5f",
+
+    "Synapses": 2,
+    "StructInt": 0,
+    "Regeneration": 0,
+    "Myelination": 0
+  },
+  "n-polarNeuron": {
+    "Type": "Neuron",
+    "UnlocksAt": 50,
+    "BaseCost": "5p5f",
+
+    "Synapses": null,
+    "StructInt": 0,
+    "Regeneration": 0,
+    "Myelination": 0
+  }
+}

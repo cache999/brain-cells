@@ -1,0 +1,5 @@
+{
+  "general.commandNotFound": "%s is not a valid command. Type %shelp for more info.",
+  "general.commandNotImplemented": "%s is not implemented. Try again at a later date!",
+  "general.insufficientPermissions": "You do not have enough permissions to do that."
+}
