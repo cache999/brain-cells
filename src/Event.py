@@ -1,15 +1,18 @@
 import importlib
 import datetime
+import discord
 
-Info = importlib.import_module('Info')
+# Info = importlib.import_module('Info')
 
 
 class Event(object):
-    def __init__(self, trigger, executor_info, execute_info: Info.Info, timeout):
+    def __init__(self, trigger, context_info: discord.Message, execution_instructions: dict, timeout):
         self.trigger = trigger
-        
-        self.executor_info = executor_info
-        self.execute_info = execute_info
+
+        self.context_info = context_info # direct copy of the Info passed onto the executor.
+
+        self.execution_instructions = execution_instructions # instructions determining what script will be run
+        # and with what parameters.
 
         self.timeout = timeout
         self.timeout_coro = None
@@ -19,9 +22,10 @@ class Event(object):
 
 
 class MessageEvent(Event):
-    def __init__(self, trigger, executor_info, execute_info: Info.Info, timeout):
-        super().__init__(trigger, executor_info, execute_info, timeout)
+    def __init__(self, trigger, context_info: discord.Message, execution_instructions: dict, timeout):
+        super().__init__(trigger, context_info, execution_instructions, timeout)
 
+    '''
     async def execute(self):
         i = self.execute_info
         try:
@@ -33,3 +37,4 @@ class MessageEvent(Event):
 
         except ModuleNotFoundError:
             await i.send(i.command + ' is not a valid command. Type ' + prefix + 'help for more info.')
+    '''

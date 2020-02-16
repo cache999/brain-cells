@@ -1,5 +1,7 @@
 from discord import Embed
 import json
+import importlib
+config = importlib.import_module('config')
 
 
 async def send_raw(info, message):
@@ -22,13 +24,11 @@ def default_embed():
 
 # wrapper for language
 class Lang:
-    with open('src/arch-config.json') as f:
-        ac = json.loads(f.read())
-        f.close()
-    with open('languages/' + ac['lang_file']) as f:
-        langfile = json.loads(f.read())
+
+    with open('languages/' + config.lang_file) as f:
+        lang_file = json.loads(f.read())
         f.close()
 
     @staticmethod
     def get(name):
-        return Lang.langfile[name]
+        return Lang.lang_file[name]

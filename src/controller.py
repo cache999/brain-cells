@@ -3,17 +3,12 @@ import discord
 import json
 import asyncio
 
-with open('src/arch-config.json') as file:
-    cfg = json.loads(file.read())
-    file.close()
-print("Architecture level config loaded from arch-config.json...")
-bot = importlib.import_module(cfg['bot_filename'])
+config = importlib.import_module('config')
+bot = importlib.import_module(config.bot_filename)
 # bot prefix doesn't really belong here, but here it is before I create another config.
-prefix = cfg['prefix']
-Info = importlib.import_module('Info')
 Event = importlib.import_module('Event')
-View = importlib.import_module('view')
-Lang = View.Lang
+view = importlib.import_module('view')
+Lang = view.Lang
 
 
 # create functions to be patched
@@ -26,111 +21,124 @@ async def on_ready(self: bot.Client):
     print(f'{self.user} has connected to Discord.')
 
 
-async def timeout_coroutine(self: bot.Client, timeout, event_author_id):
+async def timeout_coroutine(self: bot.Client, timeout, event_channel_id, event_author_id):
     await asyncio.sleep(timeout)
-    # if the timeout has not been terminated, purge the Event using the author ID.
+    # if the timeout has not been terminated, purge the Event.
     print('coroutine purged because of timeout.')
+    # cancel coro
     try:
-        self.message_events[event_author_id].timeout_coro.cancel()
+        self.message_events[event_channel_id][event_author_id].timeout_coro.cancel()
     except asyncio.CancelledError:
         pass
 
-    self.message_events[event_author_id] = None
-
+    del self.message_events[event_channel_id][event_author_id]
 
 
 async def add_event(self: bot.Client, event):
     if type(event) == Event.MessageEvent:
-        if self.message_events.get(event.executor_info.author.id) is not None:
+        if self.message_events.get(event.context_info.author.id) is not None:
             # delete a current event's coroutine if it exists
             try:
                 event.timeout_coro.cancel()
             except asyncio.CancelledError:
                 pass
-            self.message_events[event.executor_info.author.id] = None
+
+            self.message_events[event.context_info.author.id] = None
         # update the dict with the event.
-        self.message_events.update({event.executor_info.author.id: event})
+        if self.message_events.get(event.context_info.channel.id) is None:
+            self.message_events.update({
+                event.context_info.channel.id: {
+                    event.context_info.author.id: event
+                }
+            })
+        else:
+            self.message_events[event.context_info.channel.id].update({
+                event.context_info.author.id: event
+            })
+
         # schedule a coroutine
         event_coroutine = asyncio.ensure_future(
-            self.timeout_coroutine(event.timeout, event.executor_info.author.id)
+            self.timeout_coroutine(event.timeout,
+                                   event.context_info.m.channel.id,
+                                   event.context_info.m.author.id
+                                   )
         )
         # add a reference to the running coroutine to the event.
-        self.message_events[event.executor_info.author.id].timeout_coro = event_coroutine
+        self.message_events[event.context_info.channel.id][event.context_info.author.id].timeout_coro = event_coroutine
         print('added event')
 
 
-async def listen_for_message_events(self, i):
+async def listen_for_message_events(self, m):
     fulfilled_triggers = []
-    for k, me in self.message_events.items():
-        if me is not None:
-            if me.trigger(i):
-                fulfilled_triggers.append(me)
-                # cancel the timeout.
-                try:
-                    me.timeout_coro.cancel()
-                except asyncio.CancelledError:
-                    pass
+    channel_dict = self.message_events.get(m.channel.id)
+    if channel_dict is not None:
+        for k, me in channel_dict.items():
+            if me is not None:
+                if me.trigger(m):
+                    fulfilled_triggers.append(me)
+                    # cancel the timeout.
+                    try:
+                        me.timeout_coro.cancel()
+                    except asyncio.CancelledError:
+                        pass
 
-                self.message_events[k] = None
-                print('coroutine canceled because trigger has been activated.')
-    return fulfilled_triggers
+                    channel_dict[k] = None
+                    print('coroutine canceled because trigger has been activated.')
+        return fulfilled_triggers
+    else:
+        return []
 
 
 async def execute_event(self, e, m):
+    # todo: make this ensure success.
     try:
-        script = importlib.import_module('scripts.' + e.execute_info.command)
-        e.execute_info.add_message(m)
-        # print(e.execute_info.message)
+        script = importlib.import_module('scripts.' + e.execution_instructions['script'])
+        # e.execute_info.add_message(m)
+        # run
         asyncio.ensure_future(
-            script.main(e.execute_info, executor_info=e.executor_info)
+            script.main(m, execution_instructions=e.execution_instructions, context_info=e.context_info)
         )
     except (NotImplementedError, AttributeError, ModuleNotFoundError) as err:
         print(err)
-        print('why borken, ' + e.execute_info.command + ' not found')
+        print('why borken, ' + e.execution_instructions['script'] + ' not found')
 
 
-async def on_message(self: bot.Client, m: discord.message):
+async def on_message(self: bot.Client, m: discord.Message):
     if m.author == self.user:
         return
 
-    i = Info.Info(
-        message=m,
-        args=None,
-        command=None
-    )
-
-    # TODO: deprecate the Info object and just use discord.message with a few added things.
-    # TODO: add a language file and FIX VIEW.PY
-    fulfilled_events = await self.listen_for_message_events(i)
+    # TODO: FIX VIEW.PY
+    fulfilled_events = await self.listen_for_message_events(m)
     for e in fulfilled_events:
-        # todo: make this ensure success.
         await self.execute_event(e, m)
 
-    if i.m.content.startswith(prefix):
-        # gib an Info object to the appropriate script for further handling.
-        i.args = i.m.content.split(' ')
-        i.command = i.args[0][len(prefix):]
+    if m.content.startswith(config.prefix):
+        args = m.content.lower().split(' ')
+        command = args[0] = args[0][len(config.prefix):]
+        # TODO: I don't like this. This is unclean. PURGE
 
+        # gib the Message object to the appropriate script for further handling.
         try:
-            script = importlib.import_module('scripts.' + i.command)
+            script = importlib.import_module('scripts.' + command)
             if script.executable:
                 try:
-                    '''
+                    # todo: make this use ensure_future instead of await because await tay
+                    ''' 
                     script_result = asyncio.ensure_future(
                         script.main(i)
                     )
                     '''
-                    script_result = await script.main(i)
+                    script_result = await script.main(m)
                     if script_result is not None:
                         await self.add_event(script_result)
                 except (NotImplementedError, AttributeError):
                     # TODO: relegate these to view.py once it's done
-                    await i.m.channel.send(Lang.get('general.commandNotImplemented') % i.command)
+                    await m.channel.send(Lang.get('general.commandNotImplemented') % command)
             else:
                 # need sudo perms
-                await i.m.channel.send(Lang.get('general.insufficientPermissions'))
+                await m.channel.send(Lang.get('general.insufficientPermissions'))
         except ModuleNotFoundError:
-            await i.m.channel.send(Lang.get('general.commandNotFound') % (i.command, prefix))
+            await m.channel.send(Lang.get('general.commandNotFound') % (command, config.prefix))
 
 
 # patch the functions into the bot
