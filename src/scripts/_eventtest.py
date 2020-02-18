@@ -1,6 +1,6 @@
 executable = False
 
-async def main(m, execution_instructions, context_info):
+async def main(m, execution_instructions, context_message):
     ans = execution_instructions['correct_ans']
     msg = int(m.content)
     if msg == ans:
@@ -11,4 +11,4 @@ async def main(m, execution_instructions, context_info):
                              'not be condoned. The KGB shall be at your door shortly.')
         if ans > msg:
             await m.channel.send('Comrade, you have underestimated the number of rations! Your failure to fulfill the '
-                             '5-year plan is unacceptable. Prepare to be deported to siberia.')
+                             '5-year plan is unacceptable. Prepare to be sent to gulag.')

@@ -18,13 +18,16 @@ async def main(m):
 
     # in hindsight i wrote an api nobody will be able to understand. But its flexible so who the fuck cares?
     event = Event.MessageEvent(
-        trigger=lambda info: info.author == i.author,  # execute this event whenever same author responds
-        context_info=i,
-        execution_instructions={
+        lambda info: info.author == m.author,  # execute this event whenever same author responds
+        m, # context message
+        {
             'script': '_eventtest',
             'correct_ans': ans
-        },
-        timeout=5
+        }, # execution instructions
+        5, # timeout
+        {
+            'script': '_eventtesttimeout'
+        } # timeout instructions
     )
 
     await m.channel.send('If we have %d sawdust and %d potatoes, how many rations can we make? You have 5 seconds to answer\

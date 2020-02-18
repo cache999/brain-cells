@@ -31,40 +31,56 @@ async def timeout_coroutine(self: bot.Client, timeout, event_channel_id, event_a
     except asyncio.CancelledError:
         pass
 
+    # execute timeout!
+    e = self.message_events[event_channel_id][event_author_id]
+    if e.timeout_instructions is not None:
+        try:
+            script = importlib.import_module('scripts.' + e.timeout_instructions['script'])
+            # e.execute_info.add_message(m)
+            # run
+            asyncio.ensure_future(
+                script.main(execution_instructions=e.execution_instructions, context_message=e.context_message)
+            )
+        except (NotImplementedError, AttributeError, ModuleNotFoundError) as err:
+            print(err)
+            print('why borken, ' + e.timeout_instructions['script'] + ' not found')
+
+
     del self.message_events[event_channel_id][event_author_id]
 
 
 async def add_event(self: bot.Client, event):
     if type(event) == Event.MessageEvent:
-        if self.message_events.get(event.context_info.author.id) is not None:
+
+        if self.message_events.get(event.context_message.author.id) is not None:
             # delete a current event's coroutine if it exists
             try:
                 event.timeout_coro.cancel()
             except asyncio.CancelledError:
                 pass
 
-            self.message_events[event.context_info.author.id] = None
-        # update the dict with the event.
-        if self.message_events.get(event.context_info.channel.id) is None:
+            del self.message_events[event.context_message.author.id]
+        # create a nested channel dict if necessary.
+        if self.message_events.get(event.context_message.channel.id) is None:
             self.message_events.update({
-                event.context_info.channel.id: {
-                    event.context_info.author.id: event
+                event.context_message.channel.id: {
+                    event.context_message.author.id: event
                 }
             })
-        else:
-            self.message_events[event.context_info.channel.id].update({
-                event.context_info.author.id: event
-            })
+        self.message_events[event.context_message.channel.id].update({
+            event.context_message.author.id: event
+        })
 
-        # schedule a coroutine
+        # submit coroutine
         event_coroutine = asyncio.ensure_future(
             self.timeout_coroutine(event.timeout,
-                                   event.context_info.m.channel.id,
-                                   event.context_info.m.author.id
+                                   event.context_message.channel.id,
+                                   event.context_message.author.id
                                    )
         )
         # add a reference to the running coroutine to the event.
-        self.message_events[event.context_info.channel.id][event.context_info.author.id].timeout_coro = event_coroutine
+        self.message_events[event.context_message.channel.id][
+            event.context_message.author.id].timeout_coro = event_coroutine
         print('added event')
 
 
@@ -96,7 +112,7 @@ async def execute_event(self, e, m):
         # e.execute_info.add_message(m)
         # run
         asyncio.ensure_future(
-            script.main(m, execution_instructions=e.execution_instructions, context_info=e.context_info)
+            script.main(m, execution_instructions=e.execution_instructions, context_message=e.context_message)
         )
     except (NotImplementedError, AttributeError, ModuleNotFoundError) as err:
         print(err)
@@ -129,7 +145,9 @@ async def on_message(self: bot.Client, m: discord.Message):
                     )
                     '''
                     script_result = await script.main(m)
+
                     if script_result is not None:
+                        print('adding event')
                         await self.add_event(script_result)
                 except (NotImplementedError, AttributeError):
                     # TODO: relegate these to view.py once it's done

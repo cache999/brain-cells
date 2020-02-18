@@ -6,4 +6,9 @@ prefix = "$"
 lang_file = "en_US.json"
 
 
-#
+# Game configurations
+
+# Ratio of of structural integrity divided by load that will achieve a structural stability of 100%.
+structural_int_load_ratio = 4
+
+# The glial/neuron ratio

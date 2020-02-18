@@ -6,15 +6,16 @@ import discord
 
 
 class Event(object):
-    def __init__(self, trigger, context_info: discord.Message, execution_instructions: dict, timeout):
+    def __init__(self, trigger, context_message: discord.Message, execution_instructions: dict, timeout, timeout_instructions):
         self.trigger = trigger
 
-        self.context_info = context_info # direct copy of the Info passed onto the executor.
+        self.context_message = context_message # direct copy of the Info passed onto the executor.
 
         self.execution_instructions = execution_instructions # instructions determining what script will be run
         # and with what parameters.
 
         self.timeout = timeout
+        self.timeout_instructions = timeout_instructions
         self.timeout_coro = None
 
     def execute(self):
@@ -22,8 +23,10 @@ class Event(object):
 
 
 class MessageEvent(Event):
-    def __init__(self, trigger, context_info: discord.Message, execution_instructions: dict, timeout):
-        super().__init__(trigger, context_info, execution_instructions, timeout)
+    def __init__(self, trigger, context_message: discord.Message, execution_instructions: dict, timeout,
+                 timeout_instructions = None):
+        super()
+        super().__init__(trigger, context_message, execution_instructions, timeout, timeout_instructions)
 
     '''
     async def execute(self):
