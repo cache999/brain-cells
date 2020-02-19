@@ -1,5 +1,32 @@
 {
   "general.commandNotFound": "%s is not a valid command. Type %shelp for more info.",
   "general.commandNotImplemented": "%s is not implemented. Try again at a later date!",
-  "general.insufficientPermissions": "You do not have enough permissions to do that."
+  "general.insufficientPermissions": "You do not have enough permissions to do that.",
+  "embed.ping": {
+    "template": "defaultEmbed",
+    "title": "Ping",
+    "description": "Pong!"
+  },
+  "embed.eventTestOver": {
+    "template": "defaultEmbed",
+    "title": "You exceeded the correct amount!",
+    "description": "Comrade, you overestimated the number of rations! Capitalistic greed will not be condoned in our communist utopia."
+  },
+  "embed.eventTestUnder": {
+    "template": "defaultEmbed",
+    "title": "You underestimated the correct amount!",
+    "description": "Comrade, you have underestimated the number of rations! Your failure to fulfill the 5-year plan is unacceptable."
+  },
+  "embed.eventTestCorrect": {
+    "template": "defaultEmbed",
+    "color": "00ff00",
+    "title": "Your estimate was correct!",
+    "description": "Good job, our loyal comrade!"
+  },
+  "embed.eventTestTimeout": {
+    "template": "defaultEmbed",
+    "color": "000000",
+    "title": "You failed to make an estimate in time!",
+    "description": "Your sluggishness is a sign of incompetence that will not be ignored!"
+  }
 }
