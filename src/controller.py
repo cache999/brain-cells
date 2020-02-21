@@ -1,15 +1,14 @@
-import importlib
+from importlib import import_module
 import discord
-import json
 import asyncio
 
-config = importlib.import_module('config')
-bot = importlib.import_module(config.bot_filename)
-# bot prefix doesn't really belong here, but here it is before I create another config.
-Event = importlib.import_module('Event')
-view = importlib.import_module('view')
-Lang = view.Lang
+MODULE_PATH = 'src'
+config = import_module('.config', package=MODULE_PATH)
 
+bot = import_module('.' + config.bot_filename, package=MODULE_PATH)
+Event = import_module('.Event', package=MODULE_PATH)
+view = import_module('.view', package=MODULE_PATH)
+Lang = view.Lang
 
 # create functions to be patched
 async def initialize(self: bot.Client):
@@ -35,7 +34,7 @@ async def timeout_coroutine(self: bot.Client, timeout, event_channel_id, event_a
     e = self.message_events[event_channel_id][event_author_id]
     if e.timeout_instructions is not None:
         try:
-            script = importlib.import_module('scripts.' + e.timeout_instructions['script'])
+            script = import_module('.' + e.timeout_instructions['script'], package='src.scripts')
             # e.execute_info.add_message(m)
             # run
             asyncio.ensure_future(
@@ -108,7 +107,7 @@ async def listen_for_message_events(self, m):
 async def execute_event(self, e, m):
     # todo: make this ensure success.
     try:
-        script = importlib.import_module('scripts.' + e.execution_instructions['script'])
+        script = import_module('.' + e.execution_instructions['script'], package='src.scripts')
         # e.execute_info.add_message(m)
         # run
         asyncio.ensure_future(
@@ -135,7 +134,7 @@ async def on_message(self: bot.Client, m: discord.Message):
 
         # gib the Message object to the appropriate script for further handling.
         try:
-            script = importlib.import_module('scripts.' + command)
+            script = import_module('.' + command, package='src.scripts')
             if script.executable:
                 try:
                     # todo: make this use ensure_future instead of await because await tay
@@ -155,7 +154,8 @@ async def on_message(self: bot.Client, m: discord.Message):
             else:
                 # need sudo perms
                 await m.channel.send(Lang.get('general.insufficientPermissions'))
-        except ModuleNotFoundError:
+        except ModuleNotFoundError as mnfe:
+            print(mnfe)
             await m.channel.send(Lang.get('general.commandNotFound') % (command, config.prefix))
 
 

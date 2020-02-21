@@ -1,5 +1,7 @@
-import importlib
-config = importlib.import_module('config')
+from importlib import import_module
+
+MODULE_PATH = 'src/models'
+config = import_module('.config', package='src')
 
 
 class Brain(object):

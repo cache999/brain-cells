@@ -1,7 +1,7 @@
-import importlib
+from importlib import import_module
 
-config = importlib.import_module('config')
-view = importlib.import_module('view')
+config = import_module('.config', package='src')
+view = import_module('.view', package='src')
 
 executable = True
 

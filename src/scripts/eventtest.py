@@ -1,9 +1,10 @@
 import discord
 import random
-import importlib
+from importlib import import_module
 
-Event = importlib.import_module('Event')
-config = importlib.import_module('config')
+view = import_module('.view', package='src')
+config = import_module('.config', package='src')
+Event = import_module('.Event', package='src')
 
 executable = True
 
@@ -19,15 +20,15 @@ async def main(m):
     # in hindsight i wrote an api nobody will be able to understand. But its flexible so who the fuck cares?
     event = Event.MessageEvent(
         lambda info: info.author == m.author,  # execute this event whenever same author responds
-        m, # context message
+        m,  # context message
         {
             'script': '_eventtest',
             'correct_ans': ans
-        }, # execution instructions
-        5, # timeout
+        },  # execution instructions
+        5,  # timeout
         {
             'script': '_eventtesttimeout'
-        } # timeout instructions
+        }  # timeout instructions
     )
 
     await m.channel.send('If we have %d sawdust and %d potatoes, how many rations can we make? You have 5 seconds to answer\

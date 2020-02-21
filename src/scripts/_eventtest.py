@@ -1,5 +1,5 @@
-import importlib
-view = importlib.import_module('view')
+from importlib import import_module
+view = import_module('.view', package='src')
 
 
 executable = False

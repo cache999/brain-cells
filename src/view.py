@@ -1,9 +1,11 @@
 from discord import Embed
 import json
-import importlib
+from importlib import import_module
 
-config = importlib.import_module('config')
-embed_templates = importlib.import_module('embed_templates')
+MODULE_PATH = 'src'
+
+config = import_module('.config', package=MODULE_PATH)
+embed_templates = import_module('.embed_templates', package=MODULE_PATH)
 
 async def send(channel, message_or_embed_or_dict: (str, Embed, dict)):
     med = message_or_embed_or_dict
@@ -43,6 +45,6 @@ class Lang:
         if isinstance(v, dict):
             lang_file[k] = apply_template(v)
 
-    @staticmethod
-    def get(name):
-        return Lang.lang_file[name].copy()
+    @classmethod
+    def get(cls, name):
+        return cls.lang_file[name]

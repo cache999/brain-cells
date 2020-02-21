@@ -1,7 +1,9 @@
-import importlib
-Brain = importlib.import_module('Brain')
-Inventory = importlib.import_module('Inventory')
-config = importlib.import_module('config')
+from importlib import import_module
+
+MODULE_PATH = 'src/models'
+Brain = import_module('.Brain', package=MODULE_PATH)
+Inventory = import_module('.Inventory', package=MODULE_PATH)
+config = import_module('.config', package='src')
 
 
 class Player:
